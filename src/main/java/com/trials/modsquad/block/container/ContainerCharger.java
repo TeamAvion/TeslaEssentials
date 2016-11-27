@@ -14,37 +14,48 @@ public class ContainerCharger extends Container {
 
     private TileCharger charger;
 
-    public ContainerCharger(InventoryPlayer inv, TileCharger charger){
+    public ContainerCharger(InventoryPlayer inv, TileCharger charger) {
         this.charger = charger;
         addSlotToContainer(new SlotItemHandler(charger, 0, 80, 34)); // Nice and centered :P
 
-        for(int i = 0; i<3; ++i) for(int j = 0; j<9; ++j) addSlotToContainer(new Slot(inv, j+i*9+9, 8+j*18, 84+i*18));
-        for(int i = 0; i<9; ++i) addSlotToContainer(new Slot(inv, i, 8+i*18, 142));
+        for (int i = 0; i < 3; ++i)
+            for (int j = 0; j < 9; ++j) addSlotToContainer(new Slot(inv, j + i * 9 + 9, 8 + j * 18, 84 + i * 18));
+        for (int i = 0; i < 9; ++i) addSlotToContainer(new Slot(inv, i, 8 + i * 18, 142));
     }
 
     @Nullable
     @Override
     public ItemStack transferStackInSlot(EntityPlayer playerIn, int index) {
-        ItemStack i = null;
+        ItemStack i = ItemStack.EMPTY;
         Slot s = inventorySlots.get(index);
-        if(s!=null && s.getHasStack()){
+        if (s != null && s.getHasStack()) {
             ItemStack is = s.getStack();
-            assert is!=null;
+            assert ((is != null) || !is.isEmpty());
             i = is.copy();
-            if(index<charger.getSlots()){
-                if(!mergeItemStack(is, charger.getSlots(), 36+charger.getSlots(), true)) return null;
+            if (index < charger.getSlots()) {
+                if (!mergeItemStack(is, charger.getSlots(), 36 + charger.getSlots(), true)) {
+                    return ItemStack.EMPTY;
+                }
             }
-            else if(!mergeItemStack(is, 0, charger.getSlots(), false)) return null;
-            if(is.stackSize == 0) s.putStack(null);
-            else s.onSlotChanged();
-            if(is.stackSize == i.stackSize) return null;
-            s.onPickupFromSlot(playerIn, is);
+            else if (!mergeItemStack(is, 0, charger.getSlots(), false)) {
+                return ItemStack.EMPTY;
+            }
+            if (is.getCount() == 0) {
+                s.putStack(ItemStack.EMPTY);
+            }
+            else {
+                s.onSlotChanged();
+            }
+            if (is.getCount() == i.getCount()) {
+                return ItemStack.EMPTY;
+            }
+            s.onTake(playerIn, is);
         }
         return i;
     }
 
     @Override
     public boolean canInteractWith(EntityPlayer playerIn) {
-        return charger.getDistanceSq(playerIn.posX+.5, playerIn.posY+.5, playerIn.posZ+.5)<64;
+        return charger.getDistanceSq(playerIn.posX + .5, playerIn.posY + .5, playerIn.posZ + .5) < 64;
     }
 }

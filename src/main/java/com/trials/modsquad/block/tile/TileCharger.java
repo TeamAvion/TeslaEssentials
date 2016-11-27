@@ -32,8 +32,6 @@ import static net.darkhax.tesla.capability.TeslaCapabilities.CAPABILITY_HOLDER;
 
 
 public class TileCharger extends TileEntity implements IItemHandlerModifiable, ITickable, Updatable {
-
-
     private ItemStack[] inventory;
     private BaseTeslaContainer container;
 
@@ -53,7 +51,8 @@ public class TileCharger extends TileEntity implements IItemHandlerModifiable, I
     @Nullable
     @Override
     public ItemStack getStackInSlot(int index) {
-        return inventory[index];
+        ItemStack stack = this.inventory[index];
+        return (stack != null) ? stack : ItemStack.EMPTY;
     }
 
     @Override
@@ -65,13 +64,13 @@ public class TileCharger extends TileEntity implements IItemHandlerModifiable, I
             return null;
         }
         if(inventory[slot].isItemEqual(stack)){
-            if(inventory[slot].stackSize+stack.stackSize<=64 && inventory[slot].stackSize+stack.stackSize<=stack.getMaxStackSize()) {
-                if(!simulate) inventory[slot].stackSize += stack.stackSize;
+            if(inventory[slot].getCount()+stack.getCount()<=64 && inventory[slot].getCount()+stack.getCount()<=stack.getMaxStackSize()) {
+                if(!simulate) inventory[slot].grow(stack.getCount());
                 return null;
             }
             tmp = stack.copy();
-            tmp.stackSize = stack.getMaxStackSize() - inventory[slot].stackSize - stack.stackSize;
-            if(!simulate) inventory[slot].stackSize = stack.getMaxStackSize();
+            tmp.setCount(stack.getMaxStackSize() - inventory[slot].getCount() - stack.getCount());
+            if(!simulate) inventory[slot].setCount(stack.getMaxStackSize());
             return tmp;
         }
         if(simulate) return inventory[slot];
@@ -86,12 +85,12 @@ public class TileCharger extends TileEntity implements IItemHandlerModifiable, I
         ITeslaHolder h;
         if(inventory[slot]==null || (inventory[0].hasCapability(CAPABILITY_HOLDER, EnumFacing.DOWN)) &&
                 (h=inventory[0].getCapability(CAPABILITY_HOLDER, EnumFacing.DOWN)).getCapacity()<h.getStoredPower()) return null;
-        if(amount>=inventory[slot].stackSize){
+        if(amount>=inventory[slot].getCount()){
             split = inventory[slot];
             if(!simulate) inventory[slot] = null;
             return split;
         }
-        if(simulate) (split = inventory[slot].copy()).stackSize = amount;
+        if(simulate) (split = inventory[slot].copy()).setCount(amount);
         else split = inventory[slot].splitStack(amount);
         return split;
     }
@@ -134,7 +133,7 @@ public class TileCharger extends TileEntity implements IItemHandlerModifiable, I
         if(pos!=null){
             int dim = 0;
             for(int i : DimensionManager.getIDs())
-                if(DimensionManager.getWorld(i).equals(worldObj)) {
+                if(DimensionManager.getWorld(i).equals(this.getWorld())) {
                     dim = i;
                     break;
                 }
@@ -157,7 +156,11 @@ public class TileCharger extends TileEntity implements IItemHandlerModifiable, I
         for(int i = 0; i<list.tagCount(); ++i){
             NBTTagCompound c = list.getCompoundTagAt(i);
             int slot = c.getInteger("Slot");
-            if(slot>=0 && slot < inventory.length) inventory[slot] = ItemStack.loadItemStackFromNBT(c);
+            if(slot>=0 && slot < inventory.length) {
+                ItemStack stack = ItemStack.EMPTY.copy();
+                stack.deserializeNBT(c);
+                inventory[slot] = stack;
+            }
         }
 
     }
@@ -177,11 +180,11 @@ public class TileCharger extends TileEntity implements IItemHandlerModifiable, I
             ITeslaHolder h = inventory[0].getCapability(TeslaCapabilities.CAPABILITY_HOLDER, EnumFacing.DOWN);
             if (h.getStoredPower() < h.getCapacity()) container.takePower(c.givePower(Math.min(container.getOutputRate(), container.getStoredPower()), false), false);
         }
-        if(syncTick==10 && !worldObj.isRemote){
+        if(syncTick==10 && !this.getWorld().isRemote){
             if(pos!=null){
                 int dim = 0;
                 for(int i : DimensionManager.getIDs())
-                    if(DimensionManager.getWorld(i).equals(worldObj)) {
+                    if(DimensionManager.getWorld(i).equals(this.getWorld())) {
                         dim = i;
                         break;
                     }
