@@ -3,6 +3,7 @@ package com.trials.modsquad.block.machine;
 import com.trials.modsquad.Ref;
 import com.trials.modsquad.block.tile.TileSolarPanel;
 import com.trials.net.ChatSync;
+import net.darkhax.tesla.api.ITeslaHolder;
 import net.darkhax.tesla.capability.TeslaCapabilities;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
@@ -28,6 +29,12 @@ import static com.trials.modsquad.ModSquad.MODID;
 
 @SuppressWarnings("deprecation")
 public class BlockSolarPanel extends Block {
+
+    private static double x = 0.0625;
+    private static final AxisAlignedBB bBox = new AxisAlignedBB(0,0,0,16*x,5*x,16*x);
+    private static final AxisAlignedBB cBox = new AxisAlignedBB(0,0,0,16*x,5*x,16*x);
+
+
     public BlockSolarPanel(String name, String reg) {
         super(Material.IRON);
         setUnlocalizedName(name);
@@ -37,6 +44,7 @@ public class BlockSolarPanel extends Block {
         setResistance(30F);
         setHardness(5F);
         setDefaultState(blockState.getBaseState().withProperty(PROPERTYFACING, EnumFacing.NORTH));
+        setLightOpacity(0);
     }
 
     public static final PropertyDirection PROPERTYFACING = PropertyDirection.create("facing", EnumFacing.Plane.HORIZONTAL);
@@ -71,12 +79,12 @@ public class BlockSolarPanel extends Block {
 
     @Override
     public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, @Nullable ItemStack heldItem, EnumFacing side, float hitX, float hitY, float hitZ) {
-        if(worldIn.getTileEntity(pos) == null || playerIn.isSneaking() || worldIn.isRemote) return false;
-        TileEntity tileentity = worldIn.getTileEntity(pos);
-        long power = tileentity==null?0:tileentity.getCapability(TeslaCapabilities.CAPABILITY_HOLDER, EnumFacing.DOWN).getStoredPower();
-        long cap = tileentity==null?20000:tileentity.getCapability(TeslaCapabilities.CAPABILITY_HOLDER, EnumFacing.DOWN).getCapacity();
-        //playerIn.addChatMessage(new TextComponentString("Power: " + power + "/" + cap));
-        if(playerIn instanceof EntityPlayerMP) ChatSync.forMod(MODID).sendPlayerChatMessage((EntityPlayerMP)playerIn, "Power: " + power + "/" + cap, Ref.GUI_CHAT_POWER); // No-spam chat message
+        TileEntity tileentity;
+        if((tileentity=worldIn.getTileEntity(pos)) == null || playerIn.isSneaking()) return false;
+        if(!worldIn.isRemote){
+            ITeslaHolder c = tileentity.getCapability(TeslaCapabilities.CAPABILITY_HOLDER, EnumFacing.DOWN);
+            ChatSync.forMod(MODID).sendPlayerChatMessage((EntityPlayerMP) playerIn, "Power: " + c.getStoredPower() + "/" + c.getCapacity(), Ref.GUI_CHAT_POWER);
+        }
         return true;
     }
 
@@ -105,20 +113,10 @@ public class BlockSolarPanel extends Block {
         super.breakBlock(worldIn, pos, state);
     }
 
-    @Override
-    public boolean doesSideBlockRendering(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing face) {
+    @Override public boolean doesSideBlockRendering(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing face) { return face.equals(EnumFacing.DOWN); }
+    @Override public boolean isNormalCube(IBlockState state, IBlockAccess world, BlockPos pos) {
         return false;
     }
-
-    @Override
-    public boolean isNormalCube(IBlockState state, IBlockAccess world, BlockPos pos) {
-        return false;
-    }
-
-    private static double x = 0.0625;
-    private static final AxisAlignedBB bBox = new AxisAlignedBB(0,0,0,16*x,5*x,16*x);
-    private static final AxisAlignedBB cBox = new AxisAlignedBB(0,0,0,16*x,5*x,16*x);
-
     @Override
     public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos) {
         return bBox;
@@ -130,8 +128,7 @@ public class BlockSolarPanel extends Block {
         return cBox;
     }
 
-    @Override
-    public boolean isFullCube(IBlockState state) {
+    @Override public boolean isFullCube(IBlockState state) {
         return false;
     }
 }

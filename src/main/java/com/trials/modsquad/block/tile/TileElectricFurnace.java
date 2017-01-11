@@ -221,6 +221,7 @@ public class TileElectricFurnace extends TileEntity implements IItemHandlerModif
 //        }
 
         // ModSquad.logger.info("smelting: " + this.isSmelting + ", tick: " + this.workTime);
+        if(this.isSmelting && this.getStackInSlot(0)==null) this.isSmelting = false;
         if (this.isSmelting) {
             if (this.worldObj.getBlockState(this.pos).getProperties().get(STATE).equals(States.ActiveState.INACTIVE)) {
                 this.worldObj.setBlockState(this.pos, this.worldObj.getBlockState(this.pos).withProperty(STATE, States.ActiveState.ACTIVE));

@@ -62,6 +62,12 @@ public class TerraSmasher extends ItemTool {
     }
 
     @Override
+    public void onCreated(ItemStack stack, World worldIn, EntityPlayer playerIn) {
+        setDamage(stack, 0);
+        super.onCreated(stack, worldIn, playerIn);
+    }
+
+    @Override
     public boolean onBlockStartBreak(ItemStack itemstack, BlockPos pos, EntityPlayer player) {
         BaseTeslaContainer container = (BaseTeslaContainer) itemstack.getCapability(TeslaCapabilities.CAPABILITY_HOLDER, EnumFacing.DOWN);
         if (container.getStoredPower() >= drain) {

@@ -3,6 +3,7 @@ package com.trials.modsquad.block.machine;
 import com.trials.modsquad.Ref;
 import com.trials.modsquad.block.tile.TileCapacitor;
 import com.trials.net.ChatSync;
+import net.darkhax.tesla.api.ITeslaHolder;
 import net.darkhax.tesla.capability.TeslaCapabilities;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
@@ -63,26 +64,16 @@ public class BlockCapacitor extends Block {
 
     @Override
     public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, @Nullable ItemStack heldItem, EnumFacing side, float hitX, float hitY, float hitZ) {
-        if(worldIn.getTileEntity(pos) == null || playerIn.isSneaking() || worldIn.isRemote) return false;
-        TileEntity tileentity = worldIn.getTileEntity(pos);
-        if(tileentity==null) return false;
-        long power = tileentity.getCapability(TeslaCapabilities.CAPABILITY_HOLDER, EnumFacing.DOWN).getStoredPower();
-        long cap = tileentity.getCapability(TeslaCapabilities.CAPABILITY_HOLDER, EnumFacing.DOWN).getCapacity();
-        if(playerIn instanceof EntityPlayerMP) //playerIn.addChatMessage(new TextComponentString("Power: " + power + "/" + cap));
-            ChatSync.forMod(MODID).sendPlayerChatMessage((EntityPlayerMP) playerIn, "Power: " + power + "/" + cap, Ref.GUI_CHAT_POWER);
+        TileEntity tileentity;
+        if((tileentity=worldIn.getTileEntity(pos)) == null || playerIn.isSneaking()) return false;
+        if(!worldIn.isRemote){
+            ITeslaHolder c = tileentity.getCapability(TeslaCapabilities.CAPABILITY_HOLDER, EnumFacing.DOWN);
+            ChatSync.forMod(MODID).sendPlayerChatMessage((EntityPlayerMP) playerIn, "Power: " + c.getStoredPower() + "/" + c.getCapacity(), Ref.GUI_CHAT_POWER);
+        }
         return true;
     }
 
-    @Override
-    public TileEntity createTileEntity(World world, IBlockState state) {
-        return new TileCapacitor();
-    }
-
-    @Override
-    public boolean hasTileEntity(IBlockState state) { return true; }
-
-    @Override
-    public boolean doesSideBlockRendering(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing face) {
-        return false;
-    }
+    @Override public TileEntity createTileEntity(World world, IBlockState state) { return new TileCapacitor(); }
+    @Override public boolean hasTileEntity(IBlockState state) { return true; }
+    @Override public boolean doesSideBlockRendering(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing face) { return false; }
 }

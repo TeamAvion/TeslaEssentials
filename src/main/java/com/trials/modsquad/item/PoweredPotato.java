@@ -22,12 +22,10 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 
 import javax.annotation.Nullable;
-
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static com.trials.modsquad.ModSquad.MODID;
 import static net.darkhax.tesla.capability.TeslaCapabilities.CAPABILITY_HOLDER;
 
 public class PoweredPotato extends ItemFood {
@@ -53,6 +51,12 @@ public class PoweredPotato extends ItemFood {
         this.electricPotatoBreakChance = electricPotatoBreakChance;
         if(breakChance < 50)
             this.breakChance = breakChance;
+    }
+
+    @Override
+    public void onCreated(ItemStack stack, World worldIn, EntityPlayer playerIn) {
+        setDamage(stack, 0);
+        super.onCreated(stack, worldIn, playerIn);
     }
 
     @Override
@@ -106,7 +110,7 @@ public class PoweredPotato extends ItemFood {
     public void setDamage(ItemStack stack, int damage) {
         ITeslaHolder h=stack.getCapability(CAPABILITY_HOLDER, EnumFacing.DOWN);
         // As stored power increases, dam tends towards the value getMaxDamage()
-        int dam = h.getCapacity()>0?Math.round(h.getStoredPower()*(getMaxDamage()-1)/h.getCapacity()):1;
+        int dam = h.getCapacity()>0?Math.round(h.getStoredPower()*(getMaxDamage()-1)/h.getCapacity()):0;
         try{ itemDamage.setInt(stack, getMaxDamage()-dam); }catch(Exception e){}
     }
 

@@ -1,15 +1,11 @@
 package com.trials.modsquad.block.tile;
 
 import com.trials.modsquad.ModSquad;
-import com.trials.modsquad.block.States;
 import com.trials.modsquad.recipe.TeslaRegistry;
 import com.trials.net.TileDataSync;
 import com.trials.net.Updatable;
 import net.darkhax.tesla.api.implementation.BaseTeslaContainer;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.FurnaceRecipes;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.nbt.NBTException;
 import net.minecraft.nbt.NBTTagCompound;
@@ -22,13 +18,11 @@ import net.minecraft.util.ITickable;
 import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
+
 import javax.annotation.Nullable;
 
-import static com.trials.modsquad.block.machine.BlockElectricFurnace.STATE;
 import static net.darkhax.tesla.capability.TeslaCapabilities.CAPABILITY_CONSUMER;
 import static net.darkhax.tesla.capability.TeslaCapabilities.CAPABILITY_HOLDER;
 
@@ -353,7 +347,7 @@ public class TileGrinder extends TileEntity implements IItemHandlerModifiable, I
 //        } else if (this.syncTick < 10) {
 //            ++this.syncTick;
 //        }
-
+        if (this.isGrinding && this.getStackInSlot(0)==null) this.isGrinding = false;
         if (this.isGrinding) {
             if (this.grindTime <= 0) {
                 ItemStack input = this.extractItem(0, 1, true);
@@ -391,12 +385,12 @@ public class TileGrinder extends TileEntity implements IItemHandlerModifiable, I
             }
         } else if (this.container.getStoredPower() >= DRAW_PER_TICK) {
             ItemStack input = this.getStackInSlot(0);
-            if ((input != null) && (input.stackSize > 0)) {
+            if (input != null && input.stackSize > 0 && TeslaRegistry.teslaRegistry.getGrinderOutFromIn(input)!=null) {
                 input = input.copy();
                 input.stackSize = 1;
                 ItemStack output = TeslaRegistry.teslaRegistry.getGrinderOutFromIn(input).copy();
                 ItemStack target = this.getStackInSlot(1);
-                if ((output != null) && (output.stackSize > 0)
+                if (output.stackSize > 0
                         && ((target == null) || (target.isItemEqual(output)))
                         && (((target == null) ? 0 : target.stackSize) + output.stackSize <= output.getMaxStackSize())) {
                     this.isGrinding = true;
@@ -421,10 +415,7 @@ public class TileGrinder extends TileEntity implements IItemHandlerModifiable, I
         }
     }
 
-    @Override
-    public void setStackInSlot(int slot, ItemStack stack) {
-        inventory[slot] = stack!=null?stack.copy():null;
-    }
+    @Override public void setStackInSlot(int slot, ItemStack stack) { inventory[slot] = stack!=null?stack.copy():null; }
 
     @Override
     public void update(String s) {
